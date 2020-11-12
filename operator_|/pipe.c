@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     strcpy(buf2, buf);
     for(int i = 0; i < count; i++) {
         char* command = strtok_r(buf2, "|", &buf2);
-        dedebug(command);
+        //dedebug(command);
         pid_t kid = fork();
         if ( kid == 0 ) {
             execute(command, (int*) pipe_arr, count, i);
