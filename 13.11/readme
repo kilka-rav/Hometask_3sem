@@ -1,0 +1,16 @@
+print_global.c shows global_variables. change.c change this variables.
+
+
+For example
+_______________________
+RUN:
+
+gcc print_global.c -o print
+gcc change.c
+./a.out print_global MY_VAR=value VAR=val1
+
+
+STDOUT:
+MY_VAR=value
+VAR=val1
+_______________________________________
