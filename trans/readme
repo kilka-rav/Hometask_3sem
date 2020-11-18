@@ -1,0 +1,9 @@
+transmission files with signals:).
+________________________________
+RUN
+gcc generate.c -o gen
+gcc priemnik.c -o priem
+./priem file_out
+...get pid
+./gen file pid
+________________________________
