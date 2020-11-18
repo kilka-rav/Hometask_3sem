@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
         exit(3);
     }
     int count = count_pipe(buf);
-    if ( count == 0 ) { //обработка без |
+    if ( count == 0 ) { 
       check(buf); 
     }
     count++;
