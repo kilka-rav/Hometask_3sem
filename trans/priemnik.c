@@ -55,6 +55,14 @@ void write_byte_one(int fd, int* buf) {
     write(fd, &rep, 1);
 }
 
+void print_end(int sig) {
+    if ( sig == SIGINT ) {
+        fprintf(stderr, "STOP\n");
+        delete();
+        exit(3);
+    }
+}
+
 int main(int argc, char* argv[]) {
     check_numbers(argc);
     int note = create_file(argv[1]);
@@ -68,26 +76,32 @@ int main(int argc, char* argv[]) {
     sigaddset(signals, SIGUSR2);
     sigaddset(signals, SIGCHLD);
     sigprocmask(SIG_BLOCK, signals, NULL);
-    int signal;
+    int signal2;
     int size = 0;
     siginfo_t* info = (siginfo_t*) malloc(sizeof(siginfo_t));
+    signal(SIGINT, print_end);
     while(1) {
-        signal = sigwaitinfo(signals, info);
-        if ( signal == -1 ) {
+        signal2 = sigwaitinfo(signals, info);
+        if ( signal2 == -1 ) {
             fprintf(stderr, "ERROR IN SIGNAL\n");
             return 1;
         }
-        if ( signal == SIGUSR1 ) {
+        if ( signal2 == SIGUSR1 ) {
             add0(byte, size);
             size++;
         }
-        else if ( signal == SIGUSR2 ) {
+        else if ( signal2 == SIGUSR2 ) {
             add1(byte, size);
             size++;
         }
-        else if ( signal == SIGCHLD ) {
+        else if ( signal2 == SIGCHLD ) {
             kill(info->si_pid, SIGUSR1);
             break;
+        }
+        else if ( signal2 == SIGINT ) {
+            fprintf(stderr, "STOP\n");
+            delete();
+            exit(3);
         }
         if ( size == 8 ) {
             write_byte_one(note, byte);

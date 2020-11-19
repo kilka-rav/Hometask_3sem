@@ -100,6 +100,10 @@ void send_file(char* buf, size_t sz, sigset_t* signals, int fd) {
     kill(pid, SIGCHLD);
 }
 
+void delete() {
+    remove("global.txt");
+}
+
 void print_time(Time Count, size_t sz) {
     double time = (Count.end - Count.begin) * 0.000001;
     printf("Time = %lf sec\n", time);
