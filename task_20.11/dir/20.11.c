@@ -4,11 +4,11 @@
 
 int main(int argc, char** argv) {
     DIR* dir;
-    struct dirent* out;
+    struct dirent* lol;
     char* direc = argv[1];
     if ( dir = opendir(direc) ) {
-        while( out = readdir(dir) ) {
-            printf("%s\n", out->d_name);
+        while( lol = readdir(dir) ) {
+            printf("%s\n", lol->d_name);
         }
     }
     return 0;
