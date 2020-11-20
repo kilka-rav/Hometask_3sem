@@ -1,0 +1,13 @@
+this programm check inotify flags with directory.
+
+____________________________________
+RUN:
+gcc inotify.c -o ino
+./ino path_to_directory
+write in terminal                  | stdout programms 
+mkdir test                         | create 
+rmdir test                         | delete
+mv directory_with_file ..          | move
+
+exit: SIGINT
+____________________________________
