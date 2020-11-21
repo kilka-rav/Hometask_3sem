@@ -8,8 +8,8 @@
 #include <sys/shm.h>
 #include <errno.h>
 
-const char* mem_gen_path = "/home/ravil/3sem/operator/hometask_2/shared_memory/rec.c";
-const char* size_gen_path = "/home/ravil/3sem/operator/hometask_2/shared_memory/sen.c";
+const char* mem_gen_path = "/home/ravil/3sem/operator/hometask_2/Hometask_3sem/shared_memory/rec.c";
+const char* size_gen_path = "/home/ravil/3sem/operator/hometask_2/Hometask_3sem/shared_memory/sen.c";
 
 void check(int argc) {
     if ( argc != 2 ) {
