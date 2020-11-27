@@ -5,10 +5,10 @@ Create a programm that
 
 
 Example:
-./a.out file1 file2 file3
+./run file1 file2 file3 file4 file5
 
 
-where file1, file2, file3 is fifo (mkfifo)
+where file1, file2, file3, file4, file5 is fifo (mkfifo)
 
 ___________________________
 RUN
@@ -16,7 +16,11 @@ gcc task.c -o run
 mkfifo file1
 mkfifo file2
 mkfifo file3
+mkfifo file4
+mkfifo file5
 terminal1           terminal2
-./run               echo "Hello" > file1
-                    echo "World" > file2
-                    echo "What do I do in my life?" > file3
+./run               echo "Harold" > file1
+                    echo "Shrek" > file2
+                    echo "Fiona" > file3
+                    echo "Shrek" > file4
+                    echo "Donkey" > file5
