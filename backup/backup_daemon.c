@@ -18,6 +18,8 @@ typedef struct dirent Dirent;
 const char s1[] = ".";
 const char s2[] = "..";
 
+int logg; //log-descriptor
+
 void check_arg(int arg) {
     if ( arg != 3 ) {
         fprintf(stderr, "ERROR IN INPUT\n");
@@ -58,6 +60,23 @@ int check_dir(char* path, char* name) {
     }
 }
 
+time_t clock_modification(char* path) {
+    struct stat buf;
+    stat(path, &buf);
+    return buf.st_mtime;
+}
+
+void write_log(char* path) {
+    time_t last_time = clock_modification(path);
+    char* record = malloc(strlen(path) + 20);
+    sprintf(record, "%s  %ld\n", path, last_time);
+    printf("record = %s\n", record);
+    //printf("%ld\n %s\n", last_time, );
+    write(logg, record, strlen(record));
+    free(record);
+}
+    
+
 void copy_file(char* arg_one, char* arg_two, char* name) {
     //printf("ARG_ONE %s\n, ARG_TWO %s\n", arg_one, arg_two);
     int len = strlen(arg_one) + strlen(name);
@@ -69,6 +88,7 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     //printf("PATH ORIGINAl %s\n", path_original);
     strcat(path_original, name);
     //printf("PATH ORIGINAl %s\n", path_original);
+    write_log(path_original);
     len = strlen(arg_two) + strlen(name);
     char* path_back = (char*) malloc(len);
     path_back[0] = '\0';
@@ -136,10 +156,14 @@ int main(int argc, char** argv) {
     check_arg(argc);
     int create = mkdir(argv[2], S_IRWXU);
     check(create);
+    unlink("log.txt");
+    logg = open("log.txt", O_CREAT | O_RDWR, 0777);
+    check(logg);
     DIR* dir;
     Dirent* entry;
     dir = opendir(argv[1]);
     recursive_down(argv[1], argv[2], dir, entry);
     closedir(dir);
+    close(logg);
     return 0;
 }
