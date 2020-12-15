@@ -40,6 +40,25 @@ void my_handler(int sig) {
     }
 }
 
+int my_strncmp(char* s, char* s1, int num) {
+    if ( (strlen(s) < num) & (strlen(s1) > num)) {
+        printf("SZ\n");
+        return 1;
+    }   
+    else if ( (strlen(s) > num) & (strlen(s1) < num)) {
+        printf("SZ\n");
+        return 1;
+    }   
+    for(int i = 0; i < num; i++) {
+        if ( s[i] != s1[i] ) { 
+            return 1;
+            printf("COUNT NUM = %d\n", i);
+        }
+    }   
+    return 0;
+}
+
+
 int check_dir(char* path, char* name) {
     char* result = malloc(strlen(path) + strlen(name));
     result[0] = '\0';
@@ -69,30 +88,29 @@ time_t clock_modification(char* path) {
 
 int compare(char* string) {
     FILE* f = fopen("log.txt", "r");
-    fflush(f);
     char* buf = malloc(128);
-    while( !(fgets(buf, 128, f))) {
-        if ( strncmp(string, buf, strlen(string)) == 0 ) {
-            printf("STRING EQUAls\n");
+    rewind(f);
+    while( !(feof(f)) ) {
+        fgets(buf, 128, f);
+        if ( strncmp(string, buf, strlen(string) - 1) == 0 ) {
             free(buf);
             fclose(f);
             return 1;
         }
     }
-    printf("STRING NOT EQUALS\n %s != %s", string, buf);
     free(buf);
     fclose(f);
     return 0;
 }
 
 int check_change(char* path, char* name) {
-    char* result = (char*) malloc(strlen(path) + strlen(name) + 20);
+    char* result = (char*) malloc(strlen(path) + strlen(name) + 30);
     result[0] = '\0';
     strcat(result, path);
     strcat(result, "/");
     strcat(result, name);
     clock_t local_time = clock_modification(result);
-    sprintf(result, "%s %ld\n", result, local_time);
+    sprintf(result, "%s %ld", result, local_time);
     if ( compare(result) == 0 ) {
         return 0;
     }
@@ -123,6 +141,15 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     int fd_orig = open(path_original, O_RDONLY);
     check(fd_orig);
     int fd_backup = open(path_back, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+    if ( errno = EBADF ) {
+        free(path_original);
+        free(path_back);
+        return;
+    }
+    if ( errno == ENOENT ) {
+        mkdir(arg_two, S_IRWXU);
+        copy_file(arg_one, arg_two, name);
+    }
     check(fd_backup);
     struct stat buffer;
     fstat(fd_orig, &buffer);
@@ -158,11 +185,16 @@ void recursive_down(char* path_origin, char* path_backup, DIR* dir, Dirent* entr
                 strcat(res_back, path_backup);
                 strcat(res_back, "/");
                 strcat(res_back, entry->d_name);
+                DIR* lmao = opendir(res_back);
+                if ( lmao == NULL ) {
+                    mkdir(res_back, S_IRWXU);
+                }
+                closedir(lmao);
                 Dirent* entry_local;
                 DIR* dir_local = opendir(result);
                 recursive_down(result, res_back, dir_local, entry_local);
                 free(result);
-                free(res_back);
+                //free(res_back);
             }
             else if ( action == -1 ) {
                 ERROR("UNKNOWN TYPE FILE");

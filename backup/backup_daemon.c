@@ -35,20 +35,15 @@ void check(int arg) {
 }
 
 int check_dir(char* path, char* name) {
-    //printf("path = %s\nname: %s\n", path, name);
     char* result = malloc(strlen(path) + strlen(name));
     result[0] = '\0';
-    //int len = strlen(path) + strlen(name); 
-    //char result[len];
     strcat(result, path);
     strcat(result, "/");
     strcat(result, name);
-    //strcat(result, "/");
-    //printf("\n path %s\n", result);
     struct stat buffer;
     int han = lstat(result, &buffer);
     check(han);
-    //free(result);
+    free(result);
     if ( (buffer.st_mode & S_IFMT) == S_IFREG ) {
         return 1;
     }
@@ -69,25 +64,20 @@ time_t clock_modification(char* path) {
 void write_log(char* path) {
     time_t last_time = clock_modification(path);
     char* record = malloc(strlen(path) + 20);
-    sprintf(record, "%s  %ld\n", path, last_time);
+    sprintf(record, "%s %ld\n", path, last_time);
     printf("record = %s\n", record);
-    //printf("%ld\n %s\n", last_time, );
     write(logg, record, strlen(record));
     free(record);
 }
     
 
 void copy_file(char* arg_one, char* arg_two, char* name) {
-    //printf("ARG_ONE %s\n, ARG_TWO %s\n", arg_one, arg_two);
     int len = strlen(arg_one) + strlen(name);
     char* path_original = (char*) malloc(len);
     path_original[0] = '\0';
     strcat(path_original, arg_one);
-    //printf("PATH ORIGINAl %s\n", path_original);
     strcat(path_original, "/");
-    //printf("PATH ORIGINAl %s\n", path_original);
     strcat(path_original, name);
-    //printf("PATH ORIGINAl %s\n", path_original);
     write_log(path_original);
     len = strlen(arg_two) + strlen(name);
     char* path_back = (char*) malloc(len);
@@ -96,10 +86,8 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     strcat(path_back, "/");
     strcat(path_back, name);
     int fd_orig = open(path_original, O_RDONLY);
-    //printf("\n path_orig %s\n", path_original);
     check(fd_orig);
     int fd_backup = open(path_back, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-    //printf("\n path_backp %s\n", path_back);
     check(fd_backup);
     struct stat buffer;
     fstat(fd_orig, &buffer);
@@ -121,7 +109,6 @@ void recursive_down(char* arg_one, char* arg_two, DIR* dir, Dirent* entry) {
                 copy_file(arg_one, arg_two, entry->d_name);
             }
             else if ( action == 2 ) {
-                //add_patha
                 char* result = (char*) malloc(strlen(arg_one) + strlen(entry->d_name));
                 result[0] = '\0';
                 strcat(result, arg_one);
@@ -132,7 +119,6 @@ void recursive_down(char* arg_one, char* arg_two, DIR* dir, Dirent* entry) {
                 strcat(res_back, arg_two);
                 strcat(res_back, "/");
                 strcat(res_back, entry->d_name);
-                //open new dir
                 Dirent* entry_local;
                 int create = mkdir(res_back, S_IRWXU);
                 check(create);
