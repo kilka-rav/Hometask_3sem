@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <unistd.h>
-
+#include <sys/wait.h>
 
 #define ERROR(s) fprintf(stderr, "%s\n", s)
 
@@ -34,6 +34,18 @@ void check(int arg) {
     }
 }
 
+void check_contains(char* origin, char* backup) {
+    if (strstr(origin, backup) == NULL ) {
+        return;
+    }   
+    else {
+        ERROR("ERROR IN PATH");
+        exit(5);
+    }   
+}
+
+
+
 int check_dir(char* path, char* name) {
     char* result = malloc(strlen(path) + strlen(name));
     result[0] = '\0';
@@ -47,8 +59,11 @@ int check_dir(char* path, char* name) {
     if ( (buffer.st_mode & S_IFMT) == S_IFREG ) {
         return 1;
     }
-    else if ( (buffer.st_mode & S_IFDIR) == S_IFDIR ) {
+    else if ( (buffer.st_mode & S_IFMT) == S_IFDIR ) {
         return 2;
+    }
+    else if ( (buffer.st_mode & S_IFMT ) == S_IFLNK ) {
+        return 3;
     }
     else {
         return -1;
@@ -70,6 +85,30 @@ void write_log(char* path) {
     free(record);
 }
     
+
+void copy_link(char* path, char* back, char* name) {
+    char* arg_one = malloc(strlen(path) + strlen(name) + 1);
+    char* arg_two = malloc(strlen(path) + strlen(name) + 1);
+    sprintf(arg_one, "%s/%s", path, name);
+    sprintf(arg_two, "%s/%s", back, name);
+    char cmd[] = "cp";
+    char* argv[6];
+    argv[0] = cmd;
+    argv[1] = "-r";
+    argv[2] = "-L";
+    argv[3] = arg_one;
+    argv[4] = arg_two;
+    argv[5] = NULL;
+    int status = 0;
+    int pid = fork();
+    if ( pid == 0 ) {
+        execvp(cmd, argv);
+    }
+    wait(&status);
+    write_log(arg_one);
+    free(arg_one);
+    free(arg_two);
+}
 
 void copy_file(char* arg_one, char* arg_two, char* name) {
     int len = strlen(arg_one) + strlen(name);
@@ -128,6 +167,9 @@ void recursive_down(char* arg_one, char* arg_two, DIR* dir, Dirent* entry) {
                 free(result);
                 free(res_back);
             }
+            else if ( action == 3 ) {
+                copy_link(arg_one, arg_two, entry->d_name);
+            }
             else if ( action == -1 ) {
                 ERROR("UNKNOWN TYPE FILE");
             }
@@ -140,6 +182,7 @@ void recursive_down(char* arg_one, char* arg_two, DIR* dir, Dirent* entry) {
 int main(int argc, char** argv) {
     printf("__________________________\nRUN\n");
     check_arg(argc);
+    check_contains(argv[1], argv[2]);
     int create = mkdir(argv[2], S_IRWXU);
     check(create);
     unlink("log.txt");
