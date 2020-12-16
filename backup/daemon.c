@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <dirent.h>
+#include <sys/wait.h>
 
 #define ERROR(string) fprintf(stderr, "%s\n", string)
 
@@ -58,6 +59,16 @@ int my_strncmp(char* s, char* s1, int num) {
     return 0;
 }
 
+void contains(char* origin, char* backup) {
+    if (strstr(origin, backup) == NULL ) { 
+        return;
+    }   
+    else {
+        ERROR("ERROR IN PATH");
+        exit(5);
+    }   
+}
+
 
 int check_dir(char* path, char* name) {
     char* result = malloc(strlen(path) + strlen(name));
@@ -72,8 +83,11 @@ int check_dir(char* path, char* name) {
     if ( (buffer.st_mode & S_IFMT) == S_IFREG ) {
         return 1;
     }
-    else if ( (buffer.st_mode & S_IFDIR) == S_IFDIR ) {
+    else if ( (buffer.st_mode & S_IFMT) == S_IFDIR ) {
         return 2;
+    }
+    else if ( (buffer.st_mode & S_IFMT) == S_IFLNK ) {
+        return 3;
     }
     else {
         return -1;
@@ -136,20 +150,16 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     char* path_back = (char*) malloc(strlen(arg_two) + strlen(name) + 1);
     path_back[0] = '\0';
     strcat(path_back, arg_two);
+    DIR* lmao = opendir(path_back);
+    if ( lmao == NULL ) {
+        mkdir(path_back, S_IRWXU);
+    }
+    closedir(lmao);
     strcat(path_back, "/");
     strcat(path_back, name);
     int fd_orig = open(path_original, O_RDONLY);
     check(fd_orig);
-    int fd_backup = open(path_back, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-    if ( errno = EBADF ) {
-        free(path_original);
-        free(path_back);
-        return;
-    }
-    if ( errno == ENOENT ) {
-        mkdir(arg_two, S_IRWXU);
-        copy_file(arg_one, arg_two, name);
-    }
+    int fd_backup = open(path_back, O_CREAT | O_WRONLY, 0666);
     check(fd_backup);
     struct stat buffer;
     fstat(fd_orig, &buffer);
@@ -163,7 +173,29 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     free(path_back);
 }
 
-
+void copy_link(char* path, char* back, char* name) {
+    char* arg_one = malloc(strlen(path) + strlen(name) + 1);
+    char* arg_two = malloc(strlen(path) + strlen(name) + 1);
+    sprintf(arg_one, "%s/%s", path, name);
+    sprintf(arg_two, "%s/%s", back, name);
+    char cmd[] = "cp";
+    char* argv[6];
+    argv[0] = cmd;
+    argv[1] = "-r";
+    argv[2] = "-L";
+    argv[3] = arg_one;
+    argv[4] = arg_two;
+    argv[5] = NULL;
+    int status = 0;
+    int pid = fork();
+    if ( pid == 0 ) {
+        execvp(cmd, argv);
+    }
+    wait(&status);
+    write_log(arg_one);
+    free(arg_one);
+    free(arg_two);
+}
 
 void recursive_down(char* path_origin, char* path_backup, DIR* dir, Dirent* entry) {
     while( entry = readdir(dir) ) {
@@ -196,6 +228,11 @@ void recursive_down(char* path_origin, char* path_backup, DIR* dir, Dirent* entr
                 free(result);
                 //free(res_back);
             }
+            else if ( action == 3 ) {
+                if ( check_change(path_origin, entry->d_name) == 0 ) {
+                    copy_link(path_origin, path_backup, entry->d_name);
+                }
+            }
             else if ( action == -1 ) {
                 ERROR("UNKNOWN TYPE FILE");
             }
@@ -216,6 +253,7 @@ void my_daemon(char* path_origin, char* path_backup) {
 
 int main(int argc, char** argv) {
     check_arguments(argc);
+    contains(argv[1], argv[2]);
     float minut, sec;
     minut = 0;
     sec = 15;
@@ -229,7 +267,7 @@ int main(int argc, char** argv) {
     if ( pid == 0 ) {
         while(1) {
             my_daemon(argv[1], argv[2]);
-            sleep(sec);
+            sleep(2);
         }
     }
     return 0;

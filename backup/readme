@@ -1,0 +1,11 @@
+This programms doing daemon-backup directory. Daemon.c cannot stop. It works all time, while you kill process(kill pid).
+IN log save current changes.
+_____________________________________
+RUN
+gcc backup_daemon.c -o backup
+gcc daemon.c -o daemon
+./backup path_to_direc path_to_backup
+./daemon path_to_direc path_to_backup
+_____________________________________
+STOP - kill pid(daemon.c) or reboot you OC
+check change in log.txt
