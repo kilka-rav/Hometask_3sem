@@ -1,0 +1,7 @@
+Stack on shared memore.
+RUN
+___________________________________
+./a.out NUMBER //NUMBER is rare code
+unit_test1 - test-stack(1 proc.)
+unit_test2 - test_stack(>1 proc.)
+___________________________________
