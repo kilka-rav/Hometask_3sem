@@ -41,26 +41,8 @@ void my_handler(int sig) {
     }
 }
 
-int my_strncmp(char* s, char* s1, int num) {
-    if ( (strlen(s) < num) & (strlen(s1) > num)) {
-        printf("SZ\n");
-        return 1;
-    }   
-    else if ( (strlen(s) > num) & (strlen(s1) < num)) {
-        printf("SZ\n");
-        return 1;
-    }   
-    for(int i = 0; i < num; i++) {
-        if ( s[i] != s1[i] ) { 
-            return 1;
-            printf("COUNT NUM = %d\n", i);
-        }
-    }   
-    return 0;
-}
-
 void contains(char* origin, char* backup) {
-    if (strstr(origin, backup) == NULL ) { 
+    if ( (strstr(origin, backup) == NULL ) & (strstr(backup, origin) == NULL) ) { 
         return;
     }   
     else {
@@ -119,10 +101,7 @@ int compare(char* string) {
 
 int check_change(char* path, char* name) {
     char* result = (char*) malloc(strlen(path) + strlen(name) + 30);
-    result[0] = '\0';
-    strcat(result, path);
-    strcat(result, "/");
-    strcat(result, name);
+    sprintf(result, "%s/%s", path, name);
     clock_t local_time = clock_modification(result);
     sprintf(result, "%s %ld", result, local_time);
     if ( compare(result) == 0 ) {
@@ -142,10 +121,7 @@ void write_log(char* path) {
 
 void copy_file(char* arg_one, char* arg_two, char* name) {
     char* path_original = (char*) malloc(strlen(arg_one) + strlen(name) + 1);
-    path_original[0] = '\0';
-    strcat(path_original, arg_one);
-    strcat(path_original, "/");
-    strcat(path_original, name);
+    sprintf(path_original, "%s/%s", arg_one, name);
     write_log(path_original); 
     char* path_back = (char*) malloc(strlen(arg_two) + strlen(name) + 1);
     path_back[0] = '\0';
@@ -172,6 +148,14 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     free(path_original);
     free(path_back);
 }
+/*
+void copy_link(char* path, char* back, char* name) {
+    contains(path, name);
+    copy_file(path, back, name);
+}
+*/
+
+
 
 void copy_link(char* path, char* back, char* name) {
     char* arg_one = malloc(strlen(path) + strlen(name) + 1);
@@ -197,6 +181,9 @@ void copy_link(char* path, char* back, char* name) {
     free(arg_two);
 }
 
+
+
+
 void recursive_down(char* path_origin, char* path_backup, DIR* dir, Dirent* entry) {
     while( entry = readdir(dir) ) {
         if ( (strcmp(entry->d_name, s1) != 0 ) & (strcmp(entry->d_name, s2) != 0 ) ) {
@@ -208,15 +195,9 @@ void recursive_down(char* path_origin, char* path_backup, DIR* dir, Dirent* entr
             }
             else if ( action == 2 ) {
                 char* result = (char*) malloc(strlen(path_origin) + strlen(entry->d_name));
-                result[0] = '\0';
-                strcat(result, path_origin);
-                strcat(result, "/");
-                strcat(result, entry->d_name);
+                sprintf(result, "%s/%s", path_origin, entry->d_name);
                 char* res_back = (char*) malloc(strlen(path_backup) + strlen(entry->d_name));
-                res_back[0] = '\0';
-                strcat(res_back, path_backup);
-                strcat(res_back, "/");
-                strcat(res_back, entry->d_name);
+                sprintf(res_back, "%s/%s", path_backup, entry->d_name);
                 DIR* lmao = opendir(res_back);
                 if ( lmao == NULL ) {
                     mkdir(res_back, S_IRWXU);

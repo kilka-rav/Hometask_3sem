@@ -35,7 +35,7 @@ void check(int arg) {
 }
 
 void check_contains(char* origin, char* backup) {
-    if (strstr(origin, backup) == NULL ) {
+    if ( (strstr(origin, backup) == NULL ) & (strstr(backup, origin) == NULL)) {
         return;
     }   
     else {
@@ -48,10 +48,7 @@ void check_contains(char* origin, char* backup) {
 
 int check_dir(char* path, char* name) {
     char* result = malloc(strlen(path) + strlen(name));
-    result[0] = '\0';
-    strcat(result, path);
-    strcat(result, "/");
-    strcat(result, name);
+    sprintf(result,"%s/%s", path, name);
     struct stat buffer;
     int han = lstat(result, &buffer);
     check(han);
@@ -85,51 +82,21 @@ void write_log(char* path) {
     free(record);
 }
     
-
-void copy_link(char* path, char* back, char* name) {
-    char* arg_one = malloc(strlen(path) + strlen(name) + 1);
-    char* arg_two = malloc(strlen(path) + strlen(name) + 1);
-    sprintf(arg_one, "%s/%s", path, name);
-    sprintf(arg_two, "%s/%s", back, name);
-    char cmd[] = "cp";
-    char* argv[6];
-    argv[0] = cmd;
-    argv[1] = "-r";
-    argv[2] = "-L";
-    argv[3] = arg_one;
-    argv[4] = arg_two;
-    argv[5] = NULL;
-    int status = 0;
-    int pid = fork();
-    if ( pid == 0 ) {
-        execvp(cmd, argv);
-    }
-    wait(&status);
-    write_log(arg_one);
-    free(arg_one);
-    free(arg_two);
-}
-
 void copy_file(char* arg_one, char* arg_two, char* name) {
     int len = strlen(arg_one) + strlen(name);
     char* path_original = (char*) malloc(len);
-    path_original[0] = '\0';
-    strcat(path_original, arg_one);
-    strcat(path_original, "/");
-    strcat(path_original, name);
+    sprintf(path_original, "%s/%s", arg_one, name);
     write_log(path_original);
     len = strlen(arg_two) + strlen(name);
     char* path_back = (char*) malloc(len);
-    path_back[0] = '\0';
-    strcat(path_back, arg_two);
-    strcat(path_back, "/");
-    strcat(path_back, name);
+    sprintf(path_back, "%s/%s", arg_two, name);
     int fd_orig = open(path_original, O_RDONLY);
     check(fd_orig);
     int fd_backup = open(path_back, O_CREAT | O_WRONLY | O_TRUNC, 0666);
     check(fd_backup);
     struct stat buffer;
-    fstat(fd_orig, &buffer);
+    int stat = fstat(fd_orig, &buffer);
+    check(stat);
     size_t size = buffer.st_size;
     char* buf = (char*) malloc(size);
     int debug = read(fd_orig, buf, size);
@@ -140,6 +107,13 @@ void copy_file(char* arg_one, char* arg_two, char* name) {
     free(path_back);
 }
 
+
+
+void copy_link(char* path, char* back, char* name) {
+    check_contains(path, name);
+    copy_file(path, back, name);
+}
+
 void recursive_down(char* arg_one, char* arg_two, DIR* dir, Dirent* entry) {
     while( entry = readdir(dir) ) { 
         if ( (strcmp(entry->d_name, s1) != 0 ) & (strcmp(entry->d_name, s2) != 0 ) ) {
@@ -147,17 +121,11 @@ void recursive_down(char* arg_one, char* arg_two, DIR* dir, Dirent* entry) {
             if ( action == 1 ) {
                 copy_file(arg_one, arg_two, entry->d_name);
             }
-            else if ( action == 2 ) {
+            else if ( action >= 2 ) {
                 char* result = (char*) malloc(strlen(arg_one) + strlen(entry->d_name));
-                result[0] = '\0';
-                strcat(result, arg_one);
-                strcat(result, "/");
-                strcat(result, entry->d_name);
+                sprintf(result, "%s/%s", arg_one, entry->d_name);
                 char* res_back = (char*) malloc(strlen(arg_two) + strlen(entry->d_name));
-                res_back[0] = '\0';
-                strcat(res_back, arg_two);
-                strcat(res_back, "/");
-                strcat(res_back, entry->d_name);
+                sprintf(res_back, "%s/%s", arg_two, entry->d_name);
                 Dirent* entry_local;
                 int create = mkdir(res_back, S_IRWXU);
                 check(create);
@@ -186,7 +154,7 @@ int main(int argc, char** argv) {
     int create = mkdir(argv[2], S_IRWXU);
     check(create);
     unlink("log.txt");
-    logg = open("log.txt", O_CREAT | O_RDWR, 0777);
+    logg = open("log.txt", O_CREAT | O_RDWR, 0666);
     check(logg);
     DIR* dir;
     Dirent* entry;
