@@ -1,0 +1,10 @@
+This programm to count pi(3.1459) with 4 * INT{(0, 1) sqrt(1 - x ^ 2)}. You can accelerated this programme, if you will able to run on some
+ threads.
+ FOR EXAMPLE
+ ________________________
+ RUN:
+ gcc pi.c -lm -pthread
+ ./a.out 4 1000000
+ ________________________
+ 4 - count of threads
+ 1000000 - accuracy
